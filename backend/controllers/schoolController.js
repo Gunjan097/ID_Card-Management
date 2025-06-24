@@ -1,0 +1,63 @@
+import bcrypt from "bcryptjs";
+import School from "../models/School.js";
+
+// ===============================
+// @desc    Admin creates School
+// @route   POST /api/schools
+// @access  Admin (permission required)
+// ===============================
+export const createSchool = async (req, res) => {
+    const { schoolName, address, phoneNumber, email, password } = req.body;
+
+    try {
+        const existingSchool = await School.findOne({ email });
+        if (existingSchool) return res.status(400).json({ message: "School already exists" });
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newSchool = await School.create({
+            schoolName,
+            address,
+            phoneNumber,
+            email,
+            password: hashedPassword,
+            createdBy: req.user.userId // Admin ID
+        });
+
+        res.status(201).json({ message: "School created successfully", school: newSchool });
+    } catch (error) {
+        res.status(500).json({ message: "Error creating school", error: error.message });
+    }
+};
+
+// ===============================
+// @desc    Get All Schools (Admin)
+// @route   GET /api/schools
+// @access  Admin (permission required)
+// ===============================
+export const getAllSchools = async (req, res) => {
+    try {
+        const schools = await School.find();
+        res.status(200).json(schools);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching schools", error: error.message });
+    }
+};
+
+// ===============================
+// @desc    Delete School by ID
+// @route   DELETE /api/schools/:id
+// @access  Admin (permission required)
+// ===============================
+export const deleteSchool = async (req, res) => {
+    try {
+        const school = await School.findById(req.params.id);
+        if (!school) return res.status(404).json({ message: "School not found" });
+
+        await school.deleteOne();
+        res.status(200).json({ message: "School deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting school", error: error.message });
+    }
+};
