@@ -88,13 +88,23 @@ export const adminLogin = async (req, res) => {
         const isMatch = await bcrypt.compare(password, admin.password);
         if (!isMatch) return res.status(400).json({ message: "Invalid password" });
 
-        const token = generateToken(admin._id, "Admin");
+        // 👇 Pass permissions to token
+        const token = generateToken(admin._id, "Admin", admin.permissions);
 
-        res.json({ token, user: { id: admin._id, email, role: "Admin", permissions: admin.permissions } });
+        res.json({
+            token,
+            user: {
+                id: admin._id,
+                email,
+                role: "Admin",
+                permissions: admin.permissions
+            }
+        });
     } catch (error) {
         res.status(500).json({ message: "Error logging in", error: error.message });
     }
 };
+
 
 // ===============================
 // School Login
