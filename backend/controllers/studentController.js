@@ -1,23 +1,56 @@
 import Student from "../models/Student.js";
 
 // Create Student
-export const createStudent = async (req, res) => {
-    const { name, dob, photo, address, phone, bloodGroup, classId } = req.body;
+import Class from "../models/Class.js";
 
+export const createStudent = async (req, res) => {
     try {
-        const newStudent = await Student.create({
+        const {
             name,
             dob,
-            photo,
             address,
             phone,
             bloodGroup,
-            classId,
-            school: req.user.userId // School's ID from token
+            className,
+            section
+        } = req.body;
+
+        // 🔍 Step 1: Find Class by name + section + school
+        const classData = await Class.findOne({
+            className,
+            section,
+            school: req.user.userId
         });
-        res.status(201).json({ message: "Student created successfully", student: newStudent });
+
+        if (!classData) {
+            return res.status(404).json({ message: "Class not found for given name & section" });
+        }
+
+        // 📸 Step 2: Handle photo
+        const photo = req.file ? req.file.path : null;
+
+        // 👨‍🎓 Step 3: Create Student
+        const newStudent = await Student.create({
+            name,
+            dob,
+            address,
+            phone,
+            bloodGroup,
+            photo,
+            classId: classData._id, // ✅ use the found Class ID
+            school: req.user.userId
+        });
+
+        res.status(201).json({
+            message: "Student created successfully",
+            student: newStudent
+        });
+
     } catch (error) {
-        res.status(500).json({ message: "Error creating student", error: error.message });
+        res.status(500).json({
+            message: "Error creating student",
+            error: error.message
+        });
     }
 };
 
