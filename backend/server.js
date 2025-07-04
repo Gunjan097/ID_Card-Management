@@ -7,6 +7,9 @@ import authRoutes from "./routes/authRoutes.js";
 import schoolRoutes from "./routes/schoolRoutes.js"
 import classRoutes from "./routes/classRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
+import superAdminRoutes from "./routes/superAdminRoutes.js";
+
+
 import path from "path";
 import multer from "multer"; 
 
@@ -21,6 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 
+app.use("/api/superadmin", superAdminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/schools", schoolRoutes);
 app.use("/api/classes", classRoutes);
