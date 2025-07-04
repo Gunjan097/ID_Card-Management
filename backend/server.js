@@ -10,10 +10,12 @@ import studentRoutes from "./routes/studentRoutes.js";
 import path from "path";
 import multer from "multer"; 
 
+import cors from 'cors';
 connectDB();
 cloudinaryConfig();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

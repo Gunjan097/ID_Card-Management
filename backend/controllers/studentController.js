@@ -5,15 +5,7 @@ import Class from "../models/Class.js";
 
 export const createStudent = async (req, res) => {
     try {
-        const {
-            name,
-            dob,
-            address,
-            phone,
-            bloodGroup,
-            className,
-            section
-        } = req.body;
+        const { name, dob, address, phone, bloodGroup, className, section, gender } = req.body;
 
         // 🔍 Step 1: Find Class by name + section + school
         const classData = await Class.findOne({
@@ -35,9 +27,10 @@ export const createStudent = async (req, res) => {
             dob,
             address,
             phone,
+            gender, // ✅ add this line
             bloodGroup,
             photo,
-            classId: classData._id, // ✅ use the found Class ID
+            classId: classData._id,
             school: req.user.userId
         });
 

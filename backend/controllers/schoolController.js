@@ -36,14 +36,24 @@ export const createSchool = async (req, res) => {
 // @route   GET /api/schools
 // @access  Admin (permission required)
 // ===============================
+// controllers/schoolController.js
 export const getAllSchools = async (req, res) => {
-    try {
-        const schools = await School.find();
-        res.status(200).json(schools);
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching schools", error: error.message });
+  try {
+    // Allow if role is SuperAdmin OR if Admin has manageSchools permission
+    if (
+      req.user.role !== "SuperAdmin" &&
+      !(req.user.role === "Admin" && req.user.permissions?.manageSchools)
+    ) {
+      return res.status(403).json({ message: "Access denied." });
     }
+
+    const schools = await School.find();
+    res.status(200).json(schools);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching schools", error: error.message });
+  }
 };
+
 
 // ===============================
 // @desc    Delete School by ID
