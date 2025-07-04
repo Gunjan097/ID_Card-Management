@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
+import Navbar from "../../components/ui/Navbar";
 
 const Schools = () => {
   const { authData } = useAuth();
@@ -78,6 +79,9 @@ const Schools = () => {
   };
 
   return (
+    <div className="mx-auto">
+      <Navbar />
+      
     <div className="p-6 max-w-5xl mx-auto">
       <h1 className="text-2xl font-bold mb-6 text-blue-600">Manage Schools</h1>
 
@@ -173,6 +177,7 @@ const Schools = () => {
             ))}
           </tbody>
         </table>
+      </div>
       </div>
     </div>
   );
