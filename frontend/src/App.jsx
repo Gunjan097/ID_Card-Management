@@ -1,23 +1,20 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import {  BrowserRouter as Router,  Routes,  Route,  Navigate,} from "react-router-dom";
 
 // Import AuthProvider to wrap the app and useAuth to access auth state
 import { AuthProvider, useAuth } from "./context/AuthContext";
-
 // Import pages
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
-import SchoolDashboard from "./pages/SchoolDashboard";
+import SchoolDashboard from "./pages/School/SchoolDashboard";
 import Schools from "./pages/Admin/Schools";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import AddSchool from "./pages/AddSchool";
 import ViewSchools from "./pages/ViewSchools";
-import AddClass from "./pages/AddClass";
-import ViewClasses from "./pages/ViewClasses";  
+import AddClass from "./pages/School/AddClass";
+import ViewClasses from "./pages/School/ViewClasses";  
+import AddStudent from "./pages/School/AddStudent";
+import ViewStudents from "./pages/School/ViewStudents";
+import ClassView from "./pages/School/ClassView";
 
 // 🛡️ Role-based Route Protection
 const PrivateRoute = ({ children, allowedRoles }) => {
@@ -117,6 +114,35 @@ function App() {
               </PrivateRoute>
             }
           />
+          
+          <Route
+            path="/school/add-student"
+            element={<PrivateRoute allowedRoles={["School"]}><AddStudent /></PrivateRoute>}
+          />
+
+          <Route
+            path="/school/add-student"
+            element={<PrivateRoute allowedRoles={["School"]}><AddStudent /></PrivateRoute>}
+          />
+          <Route
+            path="/school/view-students"
+            element={
+              <PrivateRoute allowedRoles={["School"]}>
+                <ViewStudents />
+              </PrivateRoute>
+            }
+          />
+
+          
+          <Route
+            path="/school/class/:className"
+            element={
+              <PrivateRoute allowedRoles={["School"]}>
+                <ClassView />
+              </PrivateRoute>
+            }
+          />
+
 
 
           {/* Redirect unknown routes to login */}
