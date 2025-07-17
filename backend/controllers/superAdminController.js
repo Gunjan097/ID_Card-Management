@@ -1,4 +1,5 @@
 // controllers/superAdminController.js
+import bcrypt from "bcryptjs";
 import Admin from "../models/Admin.js";
 import School from "../models/School.js";
 

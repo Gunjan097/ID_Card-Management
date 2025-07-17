@@ -71,3 +71,27 @@ export const deleteSchool = async (req, res) => {
         res.status(500).json({ message: "Error deleting school", error: error.message });
     }
 };
+
+// ===============================
+// @desc    Admin changes password of their School
+// @route   PUT /api/schools/:id/change-password
+// @access  Admin (only for schools created by them)
+// ===============================
+export const changeSchoolPassword = async (req, res) => {
+  const { newPassword } = req.body;
+  const schoolId = req.params.id;
+
+  try {
+    const school = await School.findOne({ _id: schoolId, createdBy: req.user.userId });
+    if (!school) return res.status(403).json({ message: "You don't have permission to update this school" });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await School.findByIdAndUpdate(schoolId, { password: hashedPassword });
+
+    res.status(200).json({ message: "School password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating password", error: error.message });
+  }
+};
+
+

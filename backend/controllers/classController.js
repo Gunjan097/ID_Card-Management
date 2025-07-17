@@ -1,20 +1,37 @@
 import Class from "../models/Class.js";
 
-// Create Class
-export const createClass = async (req, res) => {
-    const { className, section } = req.body;
 
-    try {
-        const newClass = await Class.create({
-            className,
-            section,
-            school: req.user.userId // School's ID from token
-        });
-        res.status(201).json({ message: "Class created successfully", classData: newClass });
-    } catch (error) {
-        res.status(500).json({ message: "Error creating class", error: error.message });
+// Create Class (with case-insensitive duplicate check)
+export const createClass = async (req, res) => {
+  const { className } = req.body;
+
+  if (!className) {
+    return res.status(400).json({ message: "Class name is required" });
+  }
+
+  const normalizedClassName = className.trim().toLowerCase();
+
+  try {
+    const existingClass = await Class.findOne({
+      school: req.user.userId,
+      className: { $regex: new RegExp(`^${normalizedClassName}$`, "i") }
+    });
+
+    if (existingClass) {
+      return res.status(400).json({ message: "Class already exists for this school" });
     }
+
+    const newClass = await Class.create({
+      className: className.trim(),
+      school: req.user.userId
+    });
+
+    res.status(201).json({ message: "Class created successfully", classData: newClass });
+  } catch (error) {
+    res.status(500).json({ message: "Error creating class", error: error.message });
+  }
 };
+
 
 // Get All Classes (School-specific)
 export const getAllClasses = async (req, res) => {
