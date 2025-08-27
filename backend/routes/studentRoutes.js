@@ -2,37 +2,32 @@ import express from "express";
 import {
   createStudent,
   getAllStudents,
-  deleteStudent,
   getStudentsByClassName,
-  exportStudentsToCSV,
-  importStudentsFromCSV
+  getStudentById,
+  updateStudent,
+  deleteStudent,
 } from "../controllers/studentController.js";
 import { protect } from "../middlewares/authMiddleware.js";
 import { upload } from "../middlewares/uploadMiddleware.js";
-import { getStudentById, updateStudent } from "../controllers/studentController.js";
-
 
 const router = express.Router();
 
+// Create student (with photo upload)
 router.post("/", protect, upload.single("photo"), createStudent);
+
+// Get all students (with pagination + search + optional class filter)
 router.get("/", protect, getAllStudents);
+
+// Get students by class name (with pagination)
 router.get("/class/:className", protect, getStudentsByClassName);
-router.put("/:id", protect, upload.single("photo"), updateStudent); // ✅ Edit student
-router.delete("/:id", protect, deleteStudent);
-router.get("/export/:className", protect, exportStudentsToCSV);
-router.post("/import/:className", protect, upload.single("csv"), importStudentsFromCSV);
+
+// Get single student by ID
 router.get("/:id", protect, getStudentById);
 
-// CSV Export
-router.get("/export/:className", protect, exportStudentsToCSV);
+// Update student
+router.put("/:id", protect, upload.single("photo"), updateStudent);
 
-// CSV Import
-router.post(
-  "/import/:className",
-  protect,
-  upload.single("csvFile"),
-  importStudentsFromCSV
-);
-
+// Delete student
+router.delete("/:id", protect, deleteStudent);
 
 export default router;
