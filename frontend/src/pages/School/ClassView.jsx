@@ -1,111 +1,143 @@
+import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-import Navbar from "../../components/ui/Navbar";
-import { useAuth } from "../../context/AuthContext";
-import { FaTrash, FaEdit } from "react-icons/fa";
 
 const ClassView = () => {
   const { className } = useParams();
-  const { authData } = useAuth();
-  const navigate = useNavigate();
   const [students, setStudents] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [loading, setLoading] = useState(true);
 
-  const fetchStudents = async () => {
-    try {
-      const res = await axios.get(`/api/students/class/${className}`, {
-        headers: {
-          Authorization: `Bearer ${authData.token}`,
-        },
-      });
-      setStudents(res.data);
-    } catch (error) {
-      console.error("Error fetching students", error);
-    }
-  };
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(
+          `/api/students/class/${className}?page=${page}&limit=${limit}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await res.json();
+        setStudents(data.students);
+        setTotal(data.total);
+      } catch (err) {
+        console.error("Error fetching students:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchStudents();
-  }, [className]);
+  }, [className, page, limit, token]);
 
-  const handleDelete = async (studentId) => {
-    if (!window.confirm("Are you sure you want to delete this student?")) return;
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this student?")) return;
     try {
-      await axios.delete(`/api/students/${studentId}`, {
-        headers: {
-          Authorization: `Bearer ${authData.token}`,
-        },
+      await fetch(`/api/students/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
-      fetchStudents();
-    } catch (error) {
-      console.error("Error deleting student", error);
+      setStudents(students.filter((s) => s._id !== id));
+      setTotal(total - 1);
+    } catch (err) {
+      console.error("Error deleting student:", err);
     }
   };
 
-  const handleAddStudent = () => navigate("/school/add-student");
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">
+        Class {className} ({total} Students)
+      </h1>
 
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-blue-700">
-            Class: {className.toUpperCase()}
-          </h1>
-          <div className="flex gap-3">
-            <button
-              onClick={handleAddStudent}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      <div className="flex gap-2 mb-4">
+        <Link
+          to={`/school/add-student/${className}`}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          ➕ Add Student
+        </Link>
+        <button className="bg-red-500 text-white px-4 py-2 rounded">
+          🗑 Remove All Students
+        </button>
+        <button className="bg-green-500 text-white px-4 py-2 rounded">
+          📥 Import CSV
+        </button>
+        <button className="bg-yellow-500 text-white px-4 py-2 rounded">
+          📤 Export CSV
+        </button>
+      </div>
+
+      {loading ? (
+        <p>Loading students...</p>
+      ) : students.length === 0 ? (
+        <p>No students found in this class.</p>
+      ) : (
+        <div className="space-y-2">
+          {students.map((student) => (
+            <div
+              key={student._id}
+              className="flex items-center justify-between border p-2 rounded"
             >
-              Add Student
-            </button>
-            <button className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-              Remove All Students
-            </button>
-            <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-              Import
-            </button>
-            <button className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800">
-              Export
-            </button>
-          </div>
-        </div>
-
-        {students.length === 0 ? (
-          <p className="text-gray-600">No students found in this class.</p>
-        ) : (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-            {students.map((student) => (
-              <div
-                key={student._id}
-                className="bg-white rounded shadow p-4 flex flex-col"
-              >
+              <div className="flex items-center gap-3">
                 <img
                   src={student.photo}
-                  alt={student.name}
-                  className="w-full h-40 object-cover rounded mb-3"
+                  alt="student"
+                  className="w-12 h-12 object-cover rounded"
                 />
-                <h2 className="font-semibold text-lg text-gray-800">{student.name}</h2>
-                <p className="text-sm text-gray-600">Gender: {student.gender}</p>
-                <p className="text-sm text-gray-600">DOB: {new Date(student.dob).toLocaleDateString()}</p>
-                <p className="text-sm text-gray-600">Phone: {student.phone}</p>
-                <p className="text-sm text-gray-600">Blood Group: {student.bloodGroup || "N/A"}</p>
-                <div className="flex gap-3 mt-4">
-                  <button className="text-blue-600 hover:text-blue-800">
-                    <FaEdit />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(student._id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    <FaTrash />
-                  </button>
+                <div>
+                  <p className="font-semibold">{student.name}</p>
+                  <p className="text-sm text-gray-600">
+                    Roll No: {student.rollNo} | GR No: {student.grNo}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Father: {student.fatherName} | Mother: {student.motherName}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+              <div className="flex gap-2">
+                <Link
+                  to={`/school/edit-student/${student._id}`}
+                  className="text-blue-500"
+                >
+                  ✏ Edit
+                </Link>
+                <button
+                  onClick={() => handleDelete(student._id)}
+                  className="text-red-500"
+                >
+                  ❌ Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      <div className="flex justify-between mt-4">
+        <button
+          disabled={page === 1}
+          onClick={() => setPage(page - 1)}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          Prev
+        </button>
+        <span>
+          Page {page} of {Math.ceil(total / limit)}
+        </span>
+        <button
+          disabled={page * limit >= total}
+          onClick={() => setPage(page + 1)}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

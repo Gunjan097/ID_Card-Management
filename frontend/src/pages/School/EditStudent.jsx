@@ -1,112 +1,151 @@
-import { useEffect, useState } from "react";
+// src/pages/EditStudent.jsx
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import Navbar from "../../components/ui/Navbar";
 import axios from "axios";
+import FormField from "../../components/form/FormField";
 
 const EditStudent = () => {
-  const { authData } = useAuth();
-  const { id } = useParams();
+  const { id } = useParams(); // student id from URL
   const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     name: "",
-    dob: "",
-    gender: "",
+    rollNo: "",
     className: "",
-    phone: "",
-    address: "",
-    bloodGroup: "",
-    section: "",
+    gender: "",
+    fatherName: "",
+    motherName: "",
+    aadharNumber: "",
+    phone1: "",
+    phone2: "",
+    dob: "",
+    uniqueId: "",
+    grNo: "",
+    rfidNo: "",
     photo: null,
   });
 
+  // Fetch available classes
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchClasses = async () => {
       try {
-        const [studentRes, classRes] = await Promise.all([
-          axios.get(`/api/students/${id}`, {
-            headers: { Authorization: `Bearer ${authData.token}` },
-          }),
-          axios.get(`/api/classes`, {
-            headers: { Authorization: `Bearer ${authData.token}` },
-          }),
-        ]);
-
-        const student = studentRes.data;
-        setFormData({
-          ...student,
-          dob: student.dob.split("T")[0], // remove time
-          photo: null, // don't preload file
+        const token = localStorage.getItem("token");
+        const res = await axios.get("/api/classes", {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        setClasses(classRes.data);
+        setClasses(res.data.classes);
       } catch (err) {
-        console.error("Error loading data", err);
+        console.error("Error fetching classes:", err);
       }
     };
+    fetchClasses();
+  }, []);
 
-    fetchData();
-  }, [authData, id]);
+  // Fetch student data by ID
+  useEffect(() => {
+    const fetchStudent = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`/api/students/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setForm(res.data);
+      } catch (err) {
+        console.error("Error fetching student:", err);
+      }
+    };
+    fetchStudent();
+  }, [id]);
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "photo" ? files[0] : value,
-    }));
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleFileChange = (e) => {
+    setForm({ ...form, photo: e.target.files[0] });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = new FormData();
-      for (let key in formData) {
-        if (formData[key] !== null) data.append(key, formData[key]);
-      }
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      Object.keys(form).forEach((key) => {
+        formData.append(key, form[key]);
+      });
 
-      await axios.put(`/api/students/${id}`, data, {
+      await axios.put(`/api/students/${id}`, formData, {
         headers: {
-          Authorization: `Bearer ${authData.token}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       });
 
-      alert("Student updated");
-      navigate(`/school/class/${formData.className}`);
+      alert("Student updated successfully");
+      navigate(-1); // go back
     } catch (err) {
-      console.error("Update failed", err);
-      alert("Error updating student");
+      console.error("Error updating student:", err);
+      alert("Failed to update student");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar />
-      <div className="max-w-2xl mx-auto mt-10 bg-white p-6 rounded shadow">
-        <h2 className="text-xl font-semibold mb-4 text-blue-600">Edit Student</h2>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <input name="name" value={formData.name} onChange={handleChange} required className="border p-2 rounded" placeholder="Name" />
-          <input type="date" name="dob" value={formData.dob} onChange={handleChange} required className="border p-2 rounded" />
-          <input name="phone" value={formData.phone} onChange={handleChange} required className="border p-2 rounded" placeholder="Phone" />
-          <input name="address" value={formData.address} onChange={handleChange} required className="border p-2 rounded" placeholder="Address" />
-          <select name="gender" value={formData.gender} onChange={handleChange} required className="border p-2 rounded">
-            <option value="">Gender</option>
-            <option>Male</option>
-            <option>Female</option>
-            <option>Other</option>
-          </select>
-          <select name="className" value={formData.className} onChange={handleChange} required className="border p-2 rounded">
-            <option value="">Class</option>
+    <div className="max-w-2xl mx-auto p-6 bg-white shadow rounded">
+      <h2 className="text-2xl font-bold mb-4">Edit Student</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <FormField label="Name" name="name" value={form.name} onChange={handleChange} required />
+        <FormField label="Roll No" name="rollNo" value={form.rollNo} onChange={handleChange} />
+
+        <div className="flex items-center space-x-4">
+          <label className="w-1/3 text-sm font-medium text-gray-700">Class</label>
+          <select
+            name="className"
+            value={form.className}
+            onChange={handleChange}
+            className="flex-1 border p-2 rounded"
+            required
+          >
+            <option value="">Select Class</option>
             {classes.map((cls) => (
-              <option key={cls._id} value={cls.className}>{cls.className}</option>
+              <option key={cls._id} value={cls}>{cls}</option>
             ))}
           </select>
-          <input name="section" value={formData.section} onChange={handleChange} placeholder="Section" className="border p-2 rounded" />
-          <input name="bloodGroup" value={formData.bloodGroup || ""} onChange={handleChange} placeholder="Blood Group" className="border p-2 rounded" />
-          <input type="file" name="photo" onChange={handleChange} className="border p-2 rounded" accept="image/*" />
-          <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Update Student</button>
-        </form>
-      </div>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <label className="w-1/3 text-sm font-medium text-gray-700">Gender</label>
+          <select
+            name="gender"
+            value={form.gender}
+            onChange={handleChange}
+            className="flex-1 border p-2 rounded"
+          >
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <FormField label="Father's Name" name="fatherName" value={form.fatherName} onChange={handleChange} />
+        <FormField label="Mother's Name" name="motherName" value={form.motherName} onChange={handleChange} />
+        <FormField label="Date of Birth" name="dob" type="date" value={form.dob?.split("T")[0] || ""} onChange={handleChange} />
+        <FormField label="Phone 1" name="phone1" value={form.phone1} onChange={handleChange} />
+        <FormField label="Phone 2" name="phone2" value={form.phone2} onChange={handleChange} />
+        <FormField label="Aadhar Number" name="aadharNumber" value={form.aadharNumber} onChange={handleChange} />
+        <FormField label="Unique ID" name="uniqueId" value={form.uniqueId} onChange={handleChange} />
+        <FormField label="GR No" name="grNo" value={form.grNo} onChange={handleChange} />
+        <FormField label="RFID No" name="rfidNo" value={form.rfidNo} onChange={handleChange} />
+
+        <div className="flex items-center space-x-4">
+          <label className="w-1/3 text-sm font-medium text-gray-700">Photo</label>
+          <input type="file" name="photo" accept="image/*" onChange={handleFileChange} className="flex-1 border p-2 rounded" />
+        </div>
+
+        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">
+          Update Student
+        </button>
+      </form>
     </div>
   );
 };

@@ -6,7 +6,9 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white shadow px-6 py-4 flex justify-between items-center">
-      <h1 className="text-xl font-semibold text-blue-600">
+      <h1 className="text-xl font-semibold text-blue-600"
+      onClick={() => window.location.href = "/school/dashboard"}
+      >
         {authData?.user?.role} Dashboard
       </h1>
       <div className="flex items-center gap-4">
