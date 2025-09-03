@@ -13,6 +13,6 @@ router.post("/create-admin", protect, superAdminOnly, createAdmin);
 router.post("/admin-login", adminLogin);
 
 // School Login
-router.post("/school-login", schoolLogin);
+router.post("/schoolLogin", schoolLogin);
 
 export default router;

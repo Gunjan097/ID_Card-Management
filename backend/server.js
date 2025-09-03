@@ -23,7 +23,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-
 app.use("/api/superadmin", superAdminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/schools", schoolRoutes);

@@ -1,32 +1,16 @@
 import mongoose from "mongoose";
 
-const schoolSchema = new mongoose.Schema({
-    schoolName: {
-        type: String,
-        required: [true, "School name is required"]
-    },
-    address: {
-        type: String,
-        required: [true, "Address is required"]
-    },
-    phoneNumber: {
-        type: String,
-        required: [true, "Phone number is required"]
-    },
-    email: {
-        type: String,
-        required: [true, "Email is required"],
-        unique: true
-    },
-    password: {
-        type: String,
-        required: [true, "Password is required"]
-    },
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Admin",
-        required: true
-    }
-}, { timestamps: true });
+const schoolSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true },
+    password: { type: String, required: true, minlength: 6 },
+    pincode: { type: String, trim: true },
+
+    // ✅ Store classes as array of strings
+    classes: [{ type: String, trim: true }],
+  },
+  { timestamps: true }
+);
 
 export default mongoose.model("School", schoolSchema);

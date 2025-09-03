@@ -2,26 +2,26 @@ import mongoose from "mongoose";
 
 const studentSchema = new mongoose.Schema(
   {
+    school: { type: mongoose.Schema.Types.ObjectId, ref: "School", required: true },
+
+    // Basic Info
     name: { type: String, required: true, trim: true },
+    rollNo: { type: String, trim: true },
+    className: { type: String, required: true, trim: true }, // ✅ String now
+    gender: { type: String, enum: ["Male", "Female", "Other"], trim: true },
+    dob: { type: Date },
+    phone1: { type: String, trim: true },
+    phone2: { type: String, trim: true },
+    // Extended Info
     fatherName: { type: String, trim: true },
     motherName: { type: String, trim: true },
-    rollNo: { type: String, trim: true },
-    uniqueId: { type: String, unique: true, required: true },
-    grNo: { type: String, trim: true },
-    rfidNo: { type: String, trim: true },
-    aadharNo: { type: String, trim: true },
+    aadharNumber: { type: String, trim: true, unique:true },
+    uniqueId: { type: String, trim: true, unique:true },
+    grNo: { type: String, trim: true, unique:true },
+    rfidNo: { type: String, trim: true, unique:true },
 
-    className: { type: String, required: true }, // must exist in school's Class list
-
-    phone1: { type: String },
-    phone2: { type: String },
-    dob: { type: Date },
-    bloodGroup: { type: String },
-    address: { type: String },
-
-    photo: { type: String },
-
-    school: { type: mongoose.Schema.Types.ObjectId, ref: "School", required: true },
+    // Photo
+    photo: { type: String, trim: true }, // Cloudinary URL
   },
   { timestamps: true }
 );
