@@ -2,6 +2,7 @@ import Student from "../models/Student.js";
 import fs from "fs";
 import csv from "csv-parser";
 import XLSX from "xlsx";
+import { useTransition } from "react";
 
 // @desc    Create a new student
 // @route   POST /api/students
@@ -221,6 +222,7 @@ export const deleteStudent = async (req, res) => {
 
 
 export const importStudents = async (req, res) => {
+  // console.log(req.user)
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -255,27 +257,82 @@ export const importStudents = async (req, res) => {
   }
 };
 
-// Helper to save to DB
 const saveStudents = async (data, schoolId) => {
   for (let row of data) {
-    // Example expected headers in CSV/Excel: name, rollNo, className, gender, dob
-    const student = new Student({
+    // Construct the student data object
+    const studentData = {
       school: schoolId,
-      name: row.name,
-      rollNo: row.rollNo,
-      className: row.className,
-      gender: row.gender,
-      dob: row.dob ? new Date(row.dob) : null,
-      phone1: row.phone1,
-      fatherName: row.fatherName,
-      motherName: row.motherName,
-    });
+      name: row.name || 'N/A',  // Default value if missing
+      rollNo: row.rollNo || '',  // Default empty string if missing
+      className: row.className || 'Unknown',  // Default value if missing
+      gender: row.gender || 'Not Specified',  // Default value if missing
+      dob: row.dob ? new Date(row.dob) : null,  // Parse DOB if available
+      phone1: row.phone1 || '',  // Default empty string if missing
+      fatherName: row.fatherName || '',  // Default empty string if missing
+      motherName: row.motherName || '',  // Default empty string if missing
+    };
 
-    // prevent duplicates if needed
-    await Student.findOneAndUpdate(
-      { uniqueId: row.uniqueId, school: schoolId },
-      student,
-      { upsert: true }
-    );
+    // Insert the student record without checking for duplicates
+    await Student.create(studentData);  // Directly create a new entry in the database
   }
 };
+
+
+export const exportStudents = async (req, res) => {
+  try {
+    const students = await Student.find({ school: req.user.userId }).lean();
+
+    if (!students || students.length === 0) {
+      return res.status(404).json({ message: "No students found" });
+    }
+
+    // Convert to worksheet
+    const worksheet = XLSX.utils.json_to_sheet(students);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
+
+    // Write to buffer
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+    // Send file
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=students.xlsx"
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ message: "Error exporting students", error: error.message });
+  }
+};
+
+
+// Helper to save to DB
+// const saveStudents = async (data, schoolId) => {
+//   for (let row of data) {
+//     // Example expected headers in CSV/Excel: name, rollNo, className, gender, dob
+//     // console.log(schoolId)
+//     const student = new Student({
+//       school: schoolId,
+//       name: row.name,
+//       rollNo: row.rollNo,
+//       className: row.className,
+//       gender: row.gender,
+//       dob: row.dob ? new Date(row.dob) : null,
+//       phone1: row.phone1,
+//       fatherName: row.fatherName,
+//       motherName: row.motherName,
+//     });
+
+//     // prevent duplicates if needed
+//     await Student.findOneAndUpdate(
+//       { uniqueId: row.uniqueId, school: schoolId },
+//       student,
+//       { upsert: true }
+//     );
+//   }
+// };
