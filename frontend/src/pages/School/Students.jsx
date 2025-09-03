@@ -3,6 +3,7 @@ import { FiEdit, FiTrash, FiUpload, FiDownload, FiPlus } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import SchoolLayout from "../../components/layout/SchoolLayout";
+import ImportStudents from "../../components/ImportStudents";
 
 const Students = () => {
   const navigate = useNavigate();
@@ -61,46 +62,49 @@ const Students = () => {
     return matchesClass && matchesSearch;
   });
 
+
   // ✅ Export CSV
-  const exportCSV = () => {
-    const headers = [
-      "Name,Father,Mother,RollNo,Class,Gender,Aadhar,UniqueId,GRNo,RFIDNo,Phone1,Phone2,DOB",
-    ];
-    const rows = filteredStudents.map(
-      (s) =>
-        `${s.name},${s.fatherName || ""},${s.motherName || ""},${s.rollNo || ""
-        },${s.className},${s.gender || ""},${s.aadharNumber || ""},${s.uniqueId || ""
-        },${s.grNo || ""},${s.rfidNo || ""},${s.phone1 || ""},${s.phone2 || ""
-        },${s.dob || ""}`
-    );
 
-    const csvContent = [headers, ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+  const exportCSV = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.get("/api/students/export", {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: "blob", // important for files
+    });
 
+    // Create download link
+    const url = window.URL.createObjectURL(new Blob([res.data]));
     const link = document.createElement("a");
     link.href = url;
-    link.download = "students.csv";
+    link.setAttribute("download", "students.xlsx");
+    document.body.appendChild(link);
     link.click();
-  };
+  } catch (err) {
+    console.error("Export failed:", err);
+    alert("Failed to export students");
+  }
+};
+
+  
 
   // ✅ Import CSV
-  const handleImport = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // const handleImport = async (e) => {
+  //   const file = e.target.files[0];
+  //   if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
+  //   const formData = new FormData();
+  //   formData.append("file", file);
 
-    try {
-      await axios.post("/api/students/import", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      fetchStudents();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  //   try {
+  //     await axios.post("/api/students/import", formData, {
+  //       headers: { "Content-Type": "multipart/form-data" },
+  //     });
+  //     fetchStudents();
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // };
 
   // ✅ Delete student
   const handleDelete = async (id) => {
@@ -150,10 +154,8 @@ const Students = () => {
             >
               <FiDownload /> Export
             </button>
-            <label className="bg-blue-500 text-white px-3 py-2 rounded flex items-center gap-1 cursor-pointer">
-              <FiUpload /> Import
-              <input type="file" accept=".csv" hidden onChange={handleImport} />
-            </label>
+
+             <ImportStudents onSuccess={fetchStudents} />
             <button
               onClick={() => navigate("/school/add-student/")}
               className="bg-indigo-600 text-white px-3 py-2 rounded flex items-center gap-1"

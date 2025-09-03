@@ -3,7 +3,7 @@ import { FiEdit, FiTrash, FiUpload, FiDownload, FiPlus } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import SchoolLayout from "../../components/layout/SchoolLayout";
-
+import ImportStudents from "../../components/ImportStudents";
 const ClassStudents = () => {
   const { className } = useParams();
   const [students, setStudents] = useState([]);
@@ -56,20 +56,20 @@ const ClassStudents = () => {
     link.click();
   };
 
-  const handleImport = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("file", file);
-    try {
-      await axios.post("/api/students/import", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      fetchStudents();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  // const handleImport = async (e) => {
+  //   const file = e.target.files[0];
+  //   if (!file) return;
+  //   const formData = new FormData();
+  //   formData.append("file", file);
+  //   try {
+  //     await axios.post("/api/students/import", formData, {
+  //       headers: { "Content-Type": "multipart/form-data" },
+  //     });
+  //     fetchStudents();
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this student?")) return;
@@ -106,10 +106,7 @@ const ClassStudents = () => {
             >
               <FiDownload /> Export
             </button>
-            <label className="bg-blue-500 text-white px-3 py-2 rounded flex items-center gap-1 cursor-pointer">
-              <FiUpload /> Import
-              <input type="file" accept=".csv" hidden onChange={handleImport} />
-            </label>
+            <ImportStudents onSuccess={fetchStudents} />
             <button
               onClick={() => navigate(`/school/add-student?class=${className}`)}
               className="bg-indigo-600 text-white px-3 py-2 rounded flex items-center gap-1"
